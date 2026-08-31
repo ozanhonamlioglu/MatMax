@@ -19,8 +19,7 @@ add_executable(matmax
   main.cpp
   test.cpp
   lib/matx.cpp
-  lib/cuda/matx_addition.cu
-  lib/cuda/matx_mul.cu
+  lib/cuda/matx_ops.cu
 )
 
 target_include_directories(matmax PRIVATE

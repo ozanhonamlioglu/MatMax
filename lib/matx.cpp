@@ -1,15 +1,15 @@
 #include "matx.hpp"
+#include "cuda/matx_ops.cuh"
 
 #include <iostream>
-
-extern "C" void matx_add(float* A, float* B, float* Buffer, int N);
+#include <stdexcept>
 
 // PUBLIC
 Matrix Matx::add(const Matrix& A, const Matrix& B) const {
   matrix_addition_check(A, B);
 
   Matrix result;
-  result.row_length = A.row_length;
+  result.num_cols = A.num_cols;
   result.mtx.resize(A.mtx.size());
 
   int N = static_cast<int>(A.mtx.size());
@@ -24,13 +24,23 @@ Matrix Matx::add(const Matrix& A, const Matrix& B) const {
   return result;
 }
 
+Matrix Matx::mul(const Matrix& A, const Matrix& B) const {
+
+}
+
 // PRIVATE
 void Matx::matrix_addition_check(const Matrix& A, const Matrix& B) const {
   if(A.mtx.size() != B.mtx.size()) {
     throw std::invalid_argument("Matrices must have the same total elements.");
   }
 
-  if (A.row_length != B.row_length) {
+  if (A.num_cols != B.num_cols) {
     throw std::invalid_argument("Matrix addition failed: Matrix shapes/row lengths do not match!");
+  }
+}
+
+void Matx::matrix_multiplication_check(const Matrix& A, const Matrix& B) const {
+  if (A.num_cols != B.num_rows()) {
+    throw std::invalid_argument("Matrix multiplication failed: A's column count must match B's row count!");
   }
 }

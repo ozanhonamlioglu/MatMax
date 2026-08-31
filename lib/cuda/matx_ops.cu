@@ -1,4 +1,5 @@
 
+// DEVICE
 __global__ void cuda_matx_add(float* A, float* B, float* Buffer, int N) {
   // Calculate global thread index
   int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -9,7 +10,12 @@ __global__ void cuda_matx_add(float* A, float* B, float* Buffer, int N) {
   }
 }
 
-extern "C" void matx_add(float* A, float* B, float* Buffer, int N) {
+__global__ void cuda_matx_mul(float* A, float* B, float* Buffer, int N) {
+  
+}
+
+// HOST
+void matx_add(float* A, float* B, float* Buffer, int N) {
   size_t size = N * sizeof(float);
   float *d_A, *d_B, *d_Buffer;
 
@@ -35,4 +41,8 @@ extern "C" void matx_add(float* A, float* B, float* Buffer, int N) {
   cudaFree(d_A);
   cudaFree(d_B);
   cudaFree(d_Buffer);
+}
+
+void matx_mul(float* A, float* B, float* Buffer, int N) {
+  
 }
