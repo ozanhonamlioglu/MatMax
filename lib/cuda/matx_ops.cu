@@ -37,6 +37,65 @@ void matx_add(float* A, float* B, float* Buffer, int N) {
   cudaFree(d_Buffer);
 }
 
+__global__ void cuda_matx_sub(float* A, float* B, float* Buffer, int N) {
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+  if (index < N) {
+    Buffer[index] = A[index] - B[index];
+  }
+}
+
+void matx_sub(float* A, float* B, float* Buffer, int N) {
+  size_t size = N * sizeof(float);
+  float *d_A, *d_B, *d_Buffer;
+
+  cudaMalloc(&d_A, size);
+  cudaMalloc(&d_B, size);
+  cudaMalloc(&d_Buffer, size);
+
+  cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_B, B, size, cudaMemcpyHostToDevice);
+
+  int threadsPerBlock = 256;
+  int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
+
+  cuda_matx_sub<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_Buffer, N);
+
+  cudaMemcpy(Buffer, d_Buffer, size, cudaMemcpyDeviceToHost);
+
+  cudaFree(d_A);
+  cudaFree(d_B);
+  cudaFree(d_Buffer);
+}
+
+__global__ void cuda_matx_scale(float* A, float* Buffer, float scalar, int N) {
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+  if (index < N) {
+    Buffer[index] = A[index] * scalar;
+  }
+}
+
+void matx_scale(float* A, float* Buffer, float scalar, int N) {
+  size_t size = N * sizeof(float);
+  float *d_A, *d_Buffer;
+
+  cudaMalloc(&d_A, size);
+  cudaMalloc(&d_Buffer, size);
+
+  cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice);
+
+  int threadsPerBlock = 256;
+  int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
+
+  cuda_matx_scale<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_Buffer, scalar, N);
+
+  cudaMemcpy(Buffer, d_Buffer, size, cudaMemcpyDeviceToHost);
+
+  cudaFree(d_A);
+  cudaFree(d_Buffer);
+}
+
 // A is M x K, B is K x P, Buffer (output) is M x P
 __global__ void cuda_matx_mul(float* A, float* B, float* Buffer, int M, int K, int P) {
   int index = threadIdx.x + blockIdx.x * blockDim.x;

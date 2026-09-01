@@ -71,6 +71,32 @@ void test_mat_mul_transpose() {
   test_compare(after_value, 4.0f);
 }
 
+void test_mat_sub() {
+  std::vector<float> _A = {1, 2, 3, 4, 5, 6};
+  std::vector<float> _B = {1, 1, 1, 1, 1, 1};
+
+  Matrix A { .mtx = _A, .dims = 3 };
+  Matrix B { .mtx = _B, .dims = 3 };
+
+  Matx matx;
+  Matrix result = matx.sub(A, B);
+
+  float cell_value = result.get_cell_at(1, 2);
+  test_compare(cell_value, 5.0f);
+}
+
+void test_mat_scale() {
+  std::vector<float> _A = {1, 2, 3, 4, 5, 6};
+
+  Matrix A { .mtx = _A, .dims = 3 };
+
+  Matx matx;
+  Matrix result = matx.scale(A, 2.0f);
+
+  float cell_value = result.get_cell_at(1, 2);
+  test_compare(cell_value, 12.0f);
+}
+
 void zeros_test() {
   Matrix A = Matx::zeros(5,10);
   test_compare(static_cast<int>(A.mtx.size()), 50);
@@ -96,6 +122,8 @@ void test_run_all() {
   test_mat_add();
   test_mat_mul();
   test_mat_mul_transpose();
+  test_mat_sub();
+  test_mat_scale();
   zeros_test();
   random_test();
 }

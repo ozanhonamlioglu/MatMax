@@ -50,9 +50,11 @@ public:
   static Matrix random(int h, int d);
 
   Matrix add(const Matrix& A, const Matrix& B) const;
+  Matrix sub(const Matrix& A, const Matrix& B) const;
+  Matrix scale(const Matrix& A, float scalar) const;
   Matrix mul(const Matrix& A, const Matrix& B) const;
 
 private:
-  void matrix_addition_check(const Matrix& A, const Matrix& B) const;
+  void matrix_elementwise_check(const Matrix& A, const Matrix& B) const;
   void matrix_multiplication_check(const Matrix& A, const Matrix& B) const;
 };

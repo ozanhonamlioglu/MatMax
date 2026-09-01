@@ -28,3 +28,16 @@ target_include_directories(matmax PRIVATE
 )
 
 target_link_libraries(matmax PRIVATE CUDA::cudart)
+
+add_executable(logreg
+  ml/logistic-regression.cpp
+  lib/matx.cpp
+  lib/cuda/matx_ops.cu
+)
+
+target_include_directories(logreg PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib
+)
+
+target_link_libraries(logreg PRIVATE CUDA::cudart)
