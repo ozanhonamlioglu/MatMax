@@ -9,7 +9,7 @@ Matrix Matx::add(const Matrix& A, const Matrix& B) const {
   matrix_addition_check(A, B);
 
   Matrix result;
-  result.num_cols = A.num_cols;
+  result.dims = A.dims;
   result.mtx.resize(A.mtx.size());
 
   int N = static_cast<int>(A.mtx.size());
@@ -25,7 +25,24 @@ Matrix Matx::add(const Matrix& A, const Matrix& B) const {
 }
 
 Matrix Matx::mul(const Matrix& A, const Matrix& B) const {
+  matrix_multiplication_check(A, B);
 
+  int M = A.num_rows();
+  int K = A.dims;
+  int P = B.dims;
+
+  Matrix result;
+  result.dims = P;
+  result.mtx.resize(M * P);
+
+  matx_mul(
+    const_cast<float*>(A.mtx.data()),
+    const_cast<float*>(B.mtx.data()),
+    result.mtx.data(),
+    M, K, P
+  );
+
+  return result;
 }
 
 // PRIVATE
@@ -34,13 +51,13 @@ void Matx::matrix_addition_check(const Matrix& A, const Matrix& B) const {
     throw std::invalid_argument("Matrices must have the same total elements.");
   }
 
-  if (A.num_cols != B.num_cols) {
+  if (A.dims != B.dims) {
     throw std::invalid_argument("Matrix addition failed: Matrix shapes/row lengths do not match!");
   }
 }
 
 void Matx::matrix_multiplication_check(const Matrix& A, const Matrix& B) const {
-  if (A.num_cols != B.num_rows()) {
+  if (A.dims != B.num_rows()) {
     throw std::invalid_argument("Matrix multiplication failed: A's column count must match B's row count!");
   }
 }

@@ -1,5 +1,5 @@
+#include <iostream>
 
-// DEVICE
 __global__ void cuda_matx_add(float* A, float* B, float* Buffer, int N) {
   // Calculate global thread index
   int index = threadIdx.x + blockIdx.x * blockDim.x;
@@ -10,11 +10,6 @@ __global__ void cuda_matx_add(float* A, float* B, float* Buffer, int N) {
   }
 }
 
-__global__ void cuda_matx_mul(float* A, float* B, float* Buffer, int N) {
-  
-}
-
-// HOST
 void matx_add(float* A, float* B, float* Buffer, int N) {
   size_t size = N * sizeof(float);
   float *d_A, *d_B, *d_Buffer;
@@ -27,7 +22,6 @@ void matx_add(float* A, float* B, float* Buffer, int N) {
   cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice);
   cudaMemcpy(d_B, B, size, cudaMemcpyHostToDevice);
 
-  // 3. Define execution configuration and launch kernel
   int threadsPerBlock = 256;
   int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
 
@@ -43,6 +37,45 @@ void matx_add(float* A, float* B, float* Buffer, int N) {
   cudaFree(d_Buffer);
 }
 
-void matx_mul(float* A, float* B, float* Buffer, int N) {
-  
+// A is M x K, B is K x P, Buffer (output) is M x P
+__global__ void cuda_matx_mul(float* A, float* B, float* Buffer, int M, int K, int P) {
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+  if (index < M * P) {
+    int row = index / P;
+    int col = index % P;
+
+    float sum = 0.0f;
+    for (int k = 0; k < K; ++k) {
+      sum += A[row * K + k] * B[k * P + col];
+    }
+
+    Buffer[index] = sum;
+  }
+}
+
+void matx_mul(float* A, float* B, float* Buffer, int M, int K, int P) {
+  size_t size_A = M * K * sizeof(float);
+  size_t size_B = K * P * sizeof(float);
+  size_t size_Buffer = M * P * sizeof(float);
+
+  float *d_A, *d_B, *d_Buffer;
+
+  cudaMalloc(&d_A, size_A);
+  cudaMalloc(&d_B, size_B);
+  cudaMalloc(&d_Buffer, size_Buffer);
+
+  cudaMemcpy(d_A, A, size_A, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_B, B, size_B, cudaMemcpyHostToDevice);
+
+  int threadsPerBlock = 256;
+  int blocksPerGrid = (M * P + threadsPerBlock - 1) / threadsPerBlock;
+
+  cuda_matx_mul<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_Buffer, M, K, P);
+
+  cudaMemcpy(Buffer, d_Buffer, size_Buffer, cudaMemcpyDeviceToHost);
+
+  cudaFree(d_A);
+  cudaFree(d_B);
+  cudaFree(d_Buffer);
 }

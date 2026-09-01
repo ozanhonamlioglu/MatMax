@@ -5,10 +5,10 @@
 
 struct Matrix {
   std::vector<float> mtx;
-  int num_cols; // length of a single row
+  int dims; // length of a single row
 
   int num_rows() const {
-    return mtx.size() / num_cols;
+    return mtx.size() / dims;
   }
 
   float get_cell_at(int row_i, int col_i) const {
@@ -20,14 +20,28 @@ struct Matrix {
       throw std::out_of_range("get_cell_at: row index out of bounds.");
     }
 
-    if(col_i >= num_cols) {
+    if(col_i >= dims) {
       throw std::out_of_range("get_cell_at: col index out of bounds.");
     }
 
-    return mtx[row_i * num_cols + col_i];
+    return mtx[row_i * dims + col_i];
   }
 
-  // Matrix transpose() const {}; will be added
+  Matrix transpose() const {
+    int rows = num_rows();
+
+    Matrix trans;
+    trans.dims = rows;
+    trans.mtx.resize(mtx.size());
+
+    for(int row_i = 0; row_i < rows; ++row_i) {
+      for(int col_i = 0; col_i < dims; ++col_i) {
+        trans.mtx[col_i * rows + row_i] = get_cell_at(row_i, col_i);
+      }
+    }
+
+    return trans;
+  }
 };
 
 class Matx {
