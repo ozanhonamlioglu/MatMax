@@ -1,4 +1,4 @@
-# matmax
+# MatMax
 
 A small CUDA-accelerated matrix library written from scratch in C++20/CUDA, with a hand-rolled logistic regression built entirely on top of it — no cuBLAS, no Eigen, no ML frameworks. Every matrix operation the training loop needs (multiply, transpose, elementwise add/sub, scalar scale) is a real CUDA kernel.
 
