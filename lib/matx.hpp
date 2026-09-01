@@ -47,6 +47,7 @@ struct Matrix {
 class Matx {
 public:
   static Matrix zeros(int h, int d);
+  static Matrix random(int h, int d);
 
   Matrix add(const Matrix& A, const Matrix& B) const;
   Matrix mul(const Matrix& A, const Matrix& B) const;

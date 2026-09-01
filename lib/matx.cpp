@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <random>
 
 // PUBLIC
 Matrix Matx::add(const Matrix& A, const Matrix& B) const {
@@ -49,6 +50,21 @@ Matrix Matx::zeros(int h, int d) {
   Matrix mat;
   mat.dims = d;
   mat.mtx.resize(h * d);
+  return mat;
+}
+
+Matrix Matx::random(int h, int d) {
+  Matrix mat;
+  mat.dims = d;
+  mat.mtx.resize(h * d);
+
+  static std::mt19937 gen{std::random_device{}()};
+  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+
+  for(float& cell : mat.mtx) {
+    cell = dist(gen);
+  }
+
   return mat;
 }
 

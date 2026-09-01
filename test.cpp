@@ -76,9 +76,26 @@ void zeros_test() {
   test_compare(static_cast<int>(A.mtx.size()), 50);
 }
 
+void random_test() {
+  Matrix A = Matx::random(5, 10);
+  test_compare(static_cast<int>(A.mtx.size()), 50);
+  test_compare(A.dims, 10);
+
+  bool in_range = true;
+  for(float cell : A.mtx) {
+    if(cell < 0.0f || cell >= 1.0f) {
+      in_range = false;
+      break;
+    }
+  }
+
+  test_compare(static_cast<int>(in_range), 1);
+}
+
 void test_run_all() {
   test_mat_add();
   test_mat_mul();
   test_mat_mul_transpose();
   zeros_test();
+  random_test();
 }
