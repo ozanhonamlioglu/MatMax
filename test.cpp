@@ -2,11 +2,22 @@
 
 #include <iostream>
 #include <vector>
+#include <type_traits>
+#include <concepts>
+#include <source_location>
 
 #define OK "OK"
 #define FAIL "FAILED"
 
-void test_float(float x, float y) {
+template <typename T>
+concept IntOrFloat = std::same_as<T, int> || std::same_as<T, float>;
+
+void test_compare(
+  IntOrFloat auto x, 
+  IntOrFloat auto y,
+  const std::source_location& loc = std::source_location::current()) {
+  std::cout << loc.function_name() << " -> ";
+
   if(x == y) {
     std::cout << OK << std::endl;
   } else {
@@ -25,7 +36,7 @@ void test_mat_add() {
   Matrix result = matx.add(A, B);
 
   float cell_value = result.get_cell_at(0, 2);
-  test_float(cell_value, 6.0f);
+  test_compare(cell_value, 6.0f);
 }
 
 void test_mat_mul() {
@@ -40,8 +51,8 @@ void test_mat_mul() {
 
   float cell_value_1 = result.get_cell_at(0, 0);
   float cell_value_2 = result.get_cell_at(2, 1);
-  test_float(cell_value_1, 9.0f);
-  test_float(cell_value_2, 40.0f);
+  test_compare(cell_value_1, 9.0f);
+  test_compare(cell_value_2, 40.0f);
 }
 
 void test_mat_mul_transpose() {
@@ -51,17 +62,23 @@ void test_mat_mul_transpose() {
 
   // Before transpose: A is 2x3
   float before_value = A.get_cell_at(1, 0);
-  test_float(before_value, 4.0f);
+  test_compare(before_value, 4.0f);
 
   Matrix trans = A.transpose();
 
   // After transpose: trans is 3x2, trans(col, row) == A(row, col)
   float after_value = trans.get_cell_at(0, 1);
-  test_float(after_value, 4.0f);
+  test_compare(after_value, 4.0f);
+}
+
+void zeros_test() {
+  Matrix A = Matx::zeros(5,10);
+  test_compare(static_cast<int>(A.mtx.size()), 50);
 }
 
 void test_run_all() {
   test_mat_add();
   test_mat_mul();
   test_mat_mul_transpose();
+  zeros_test();
 }

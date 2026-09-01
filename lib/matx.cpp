@@ -45,6 +45,13 @@ Matrix Matx::mul(const Matrix& A, const Matrix& B) const {
   return result;
 }
 
+Matrix Matx::zeros(int h, int d) {
+  Matrix mat;
+  mat.dims = d;
+  mat.mtx.resize(h * d);
+  return mat;
+}
+
 // PRIVATE
 void Matx::matrix_addition_check(const Matrix& A, const Matrix& B) const {
   if(A.mtx.size() != B.mtx.size()) {
