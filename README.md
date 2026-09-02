@@ -25,7 +25,7 @@ matmax/
         └── logistic-regression.cpp  # logistic regression example
 ```
 
-Two executables come out of the build: `tests` (the library's unit tests) and `logreg` (the logistic regression example).
+The build produces the `matmax` static library (`lib/`) plus two executables linked against it: `tests` (the library's unit tests) and `logreg` (the logistic regression example).
 
 ## Requirements
 
@@ -46,6 +46,29 @@ cmake --build .
 ```
 
 `CMAKE_CUDA_ARCHITECTURES` defaults to `native`, so it targets whatever GPU is in the machine doing the build.
+
+## Using this library in another project
+
+MatMax is distributed as source and consumed through CMake's `FetchContent`, so there is nothing to download or install manually — a consuming project's own build compiles `matmax` against its own compiler, CUDA Toolkit, and GPU:
+
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(
+  matmax
+  GIT_REPOSITORY https://github.com/ozanhonamlioglu/MatMax.git
+  GIT_TAG main # pin to a released tag once one exists, e.g. v0.1.0
+)
+FetchContent_MakeAvailable(matmax)
+
+target_link_libraries(your_target PRIVATE matmax)
+```
+
+Linking against `matmax` is sufficient — its include directory and its dependency on `CUDA::cudart` propagate automatically, so no additional `target_include_directories` or CUDA linkage is needed in the consuming project. Include the library with:
+
+```cpp
+#include "lib/matx.hpp"
+```
 
 ## The matrix library
 

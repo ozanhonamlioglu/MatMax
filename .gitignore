@@ -1,1 +1,5 @@
 build
+
+# incldue ide generated folders always
+.vscode
+.clangd

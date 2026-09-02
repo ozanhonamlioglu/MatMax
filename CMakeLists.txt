@@ -15,28 +15,26 @@ endif()
 
 find_package(CUDAToolkit REQUIRED)
 
-add_executable(tests
-  tests/main.cpp
+add_library(matmax STATIC
   lib/matx.cpp
   lib/cuda/matx_ops.cu
 )
 
-target_include_directories(tests PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib
+target_include_directories(matmax
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib
 )
 
-target_link_libraries(tests PRIVATE CUDA::cudart)
+target_link_libraries(matmax PUBLIC CUDA::cudart)
+
+add_executable(tests
+  tests/main.cpp
+)
+
+target_link_libraries(tests PRIVATE matmax)
 
 add_executable(logreg
   examples/ml/logistic-regression.cpp
-  lib/matx.cpp
-  lib/cuda/matx_ops.cu
 )
 
-target_include_directories(logreg PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib
-)
-
-target_link_libraries(logreg PRIVATE CUDA::cudart)
+target_link_libraries(logreg PRIVATE matmax)
