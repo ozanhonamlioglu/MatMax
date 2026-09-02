@@ -90,8 +90,6 @@ int main() {
 
   Dataset ds = generate_dataset(n_samples, n_features);
 
-  Matx matx;
-
   // Small random init around 0
   Matrix w = Matx::random(ds.X.dims, 1);
   for(float& v : w.mtx) {
@@ -103,16 +101,16 @@ int main() {
   auto start = std::chrono::steady_clock::now();
 
   for(int epoch = 0; epoch < epochs; ++epoch) {
-    Matrix z = matx.mul(ds.X, w);  // N x 1
+    Matrix z = Matx::mul(ds.X, w);  // N x 1
     Matrix p = apply_sigmoid(z);   // N x 1
 
-    Matrix error = matx.sub(p, ds.y); // N x 1
+    Matrix error = Matx::sub(p, ds.y); // N x 1
 
-    Matrix grad = matx.mul(Xt, error); // (D+1) x 1
+    Matrix grad = Matx::mul(Xt, error); // (D+1) x 1
 
-    Matrix delta = matx.scale(grad, -lr / n_samples);
+    Matrix delta = Matx::scale(grad, -lr / n_samples);
 
-    w = matx.add(w, delta);
+    w = Matx::add(w, delta);
 
     if(epoch % 1000 == 0 || epoch == epochs - 1) {
       float loss = binary_cross_entropy(ds.y, p);
@@ -125,7 +123,7 @@ int main() {
   std::cout << "training took " << elapsed_ms << " ms for " << epochs << " epochs" << std::endl;
 
   // Validate: forward pass again on the same dataset the model trained on
-  Matrix z_final = matx.mul(ds.X, w);
+  Matrix z_final = Matx::mul(ds.X, w);
   Matrix p_final = apply_sigmoid(z_final);
 
   float final_loss = binary_cross_entropy(ds.y, p_final);

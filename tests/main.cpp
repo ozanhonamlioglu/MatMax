@@ -13,8 +13,7 @@ void test_mat_add() {
   Matrix A { .mtx = _A, .dims = 3 };
   Matrix B { .mtx = _B, .dims = 3 };
 
-  Matx matx;
-  Matrix result = matx.add(A, B);
+  Matrix result = Matx::add(A, B);
 
   float cell_value = result.get_cell_at(0, 2);
   test_compare(cell_value, 6.0f);
@@ -27,8 +26,7 @@ void test_mat_mul() {
   Matrix A { .mtx = _A, .dims = 2 };
   Matrix B { .mtx = _B, .dims = 3 };
 
-  Matx matx;
-  Matrix result = matx.mul(A, B);
+  Matrix result = Matx::mul(A, B);
 
   float cell_value_1 = result.get_cell_at(0, 0);
   float cell_value_2 = result.get_cell_at(2, 1);
@@ -59,8 +57,7 @@ void test_mat_sub() {
   Matrix A { .mtx = _A, .dims = 3 };
   Matrix B { .mtx = _B, .dims = 3 };
 
-  Matx matx;
-  Matrix result = matx.sub(A, B);
+  Matrix result = Matx::sub(A, B);
 
   float cell_value = result.get_cell_at(1, 2);
   test_compare(cell_value, 5.0f);
@@ -71,8 +68,7 @@ void test_mat_scale() {
 
   Matrix A { .mtx = _A, .dims = 3 };
 
-  Matx matx;
-  Matrix result = matx.scale(A, 2.0f);
+  Matrix result = Matx::scale(A, 2.0f);
 
   float cell_value = result.get_cell_at(1, 2);
   test_compare(cell_value, 12.0f);

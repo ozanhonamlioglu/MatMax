@@ -49,12 +49,12 @@ public:
   static Matrix zeros(int h, int d);
   static Matrix random(int h, int d);
 
-  Matrix add(const Matrix& A, const Matrix& B) const;
-  Matrix sub(const Matrix& A, const Matrix& B) const;
-  Matrix scale(const Matrix& A, float scalar) const;
-  Matrix mul(const Matrix& A, const Matrix& B) const;
+  static Matrix add(const Matrix& A, const Matrix& B);
+  static Matrix sub(const Matrix& A, const Matrix& B);
+  static Matrix scale(const Matrix& A, float scalar);
+  static Matrix mul(const Matrix& A, const Matrix& B);
 
 private:
-  void matrix_elementwise_check(const Matrix& A, const Matrix& B) const;
-  void matrix_multiplication_check(const Matrix& A, const Matrix& B) const;
+  static void matrix_elementwise_check(const Matrix& A, const Matrix& B);
+  static void matrix_multiplication_check(const Matrix& A, const Matrix& B);
 };

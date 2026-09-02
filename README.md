@@ -67,10 +67,10 @@ Every operation below allocates device memory, copies operands to the GPU, launc
 |---|---|---|
 | `Matx::zeros(h, d)` | — | `h x d` matrix, all zeros (`vector::resize` value-initializes `float` to `0.0f`) |
 | `Matx::random(h, d)` | — | `h x d` matrix, uniform random in `[0, 1)` (`std::mt19937` + `std::uniform_real_distribution`) |
-| `matx.add(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A + B` |
-| `matx.sub(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A - B` |
-| `matx.scale(A, s)` | — | Elementwise `A * s` |
-| `matx.mul(A, B)` | `A.dims == B.num_rows()` | Matrix multiplication, `M x K` times `K x P` → `M x P` |
+| `Matx::add(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A + B` |
+| `Matx::sub(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A - B` |
+| `Matx::scale(A, s)` | — | Elementwise `A * s` |
+| `Matx::mul(A, B)` | `A.dims == B.num_rows()` | Matrix multiplication, `M x K` times `K x P` → `M x P` |
 | `A.transpose()` | — | `M x N` → `N x M` |
 
 Shape mismatches throw `std::invalid_argument` rather than silently producing incorrect results.

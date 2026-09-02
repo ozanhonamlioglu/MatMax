@@ -6,7 +6,7 @@
 #include <random>
 
 // PUBLIC
-Matrix Matx::add(const Matrix& A, const Matrix& B) const {
+Matrix Matx::add(const Matrix& A, const Matrix& B) {
   matrix_elementwise_check(A, B);
 
   Matrix result;
@@ -25,7 +25,7 @@ Matrix Matx::add(const Matrix& A, const Matrix& B) const {
   return result;
 }
 
-Matrix Matx::sub(const Matrix& A, const Matrix& B) const {
+Matrix Matx::sub(const Matrix& A, const Matrix& B) {
   matrix_elementwise_check(A, B);
 
   Matrix result;
@@ -44,7 +44,7 @@ Matrix Matx::sub(const Matrix& A, const Matrix& B) const {
   return result;
 }
 
-Matrix Matx::scale(const Matrix& A, float scalar) const {
+Matrix Matx::scale(const Matrix& A, float scalar) {
   Matrix result;
   result.dims = A.dims;
   result.mtx.resize(A.mtx.size());
@@ -61,7 +61,7 @@ Matrix Matx::scale(const Matrix& A, float scalar) const {
   return result;
 }
 
-Matrix Matx::mul(const Matrix& A, const Matrix& B) const {
+Matrix Matx::mul(const Matrix& A, const Matrix& B) {
   matrix_multiplication_check(A, B);
 
   int M = A.num_rows();
@@ -105,7 +105,7 @@ Matrix Matx::random(int h, int d) {
 }
 
 // PRIVATE
-void Matx::matrix_elementwise_check(const Matrix& A, const Matrix& B) const {
+void Matx::matrix_elementwise_check(const Matrix& A, const Matrix& B) {
   if(A.mtx.size() != B.mtx.size()) {
     throw std::invalid_argument("Matrices must have the same total elements.");
   }
@@ -115,7 +115,7 @@ void Matx::matrix_elementwise_check(const Matrix& A, const Matrix& B) const {
   }
 }
 
-void Matx::matrix_multiplication_check(const Matrix& A, const Matrix& B) const {
+void Matx::matrix_multiplication_check(const Matrix& A, const Matrix& B) {
   if (A.dims != B.num_rows()) {
     throw std::invalid_argument("Matrix multiplication failed: A's column count must match B's row count!");
   }
