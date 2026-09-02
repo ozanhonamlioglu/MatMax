@@ -1,7 +1,6 @@
 #include "utils.hpp"
 #include "lib/matx.hpp"
 
-#include <iostream>
 #include <vector>
 #include <type_traits>
 #include <concepts>

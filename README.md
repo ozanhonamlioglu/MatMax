@@ -75,42 +75,4 @@ Every operation below allocates device memory, copies operands to the GPU, launc
 
 Shape mismatches throw `std::invalid_argument` rather than silently producing incorrect results.
 
-### Test suite (`tests/`)
-
-Each operation is verified against a hand-computed expected value. `test_compare<T>` (`tests/utils.hpp`) is a C++20 concept-constrained helper restricted to `int`/`float`, and uses `std::source_location` as a default argument so it automatically reports which test function called it:
-
-```cpp
-void test_compare(IntOrFloat auto x, IntOrFloat auto y,
-                   const std::source_location& loc = std::source_location::current());
-```
-
-## Logistic regression example (`examples/ml/logistic-regression.cpp`)
-
-A binary classifier trained with full-batch gradient descent, where every matrix operation goes through `Matx`.
-
-**Dataset.** Synthetic and linearly separable: each sample's features are drawn from a Gaussian centered at `(-2, -2, ...)` for class 0 or `(2, 2, ...)` for class 1, alternating labels, seeded for reproducibility. A constant bias column of `1.0` is appended so the bias term is learned as just another weight.
-
-**Model.** `p = sigmoid(X · w)`, where `w` is initialized to small random values around 0 via `Matx::random`.
-
-**Training loop**, entirely matrix ops:
-
-```cpp
-Matrix Xt = ds.X.transpose();               // (D+1) x N, computed once
-
-for (int epoch = 0; epoch < epochs; ++epoch) {
-  Matrix z = matx.mul(ds.X, w);             // forward: N x 1
-  Matrix p = apply_sigmoid(z);              // activation (elementwise)
-
-  Matrix error = matx.sub(p, ds.y);         // dL/dz, N x 1
-  Matrix grad  = matx.mul(Xt, error);       // Xᵀ · error, (D+1) x 1
-  Matrix delta = matx.scale(grad, -lr / n_samples);
-
-  w = matx.add(w, delta);                   // gradient descent step
-}
-```
-
-Sigmoid and binary cross-entropy are implemented as plain loops — they are elementwise nonlinear/log-based operations not covered by a `Matx` primitive.
-
-**Validation.** After training, the forward pass is re-run on the same dataset to verify convergence. This example does not use a held-out test split.
-
-Each epoch launches three separate kernels through `Matx`, each with its own host↔device round trip. Device memory is not persisted across calls; this favors clarity in the current implementation and is a candidate for optimization in future work.
+See `tests/` and `examples/` for the test suite and example applications, respectively.
