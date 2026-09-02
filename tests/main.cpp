@@ -1,3 +1,4 @@
+#include "utils.hpp"
 #include "lib/matx.hpp"
 
 #include <iostream>
@@ -5,25 +6,6 @@
 #include <type_traits>
 #include <concepts>
 #include <source_location>
-
-#define OK "OK"
-#define FAIL "FAILED"
-
-template <typename T>
-concept IntOrFloat = std::same_as<T, int> || std::same_as<T, float>;
-
-void test_compare(
-  IntOrFloat auto x, 
-  IntOrFloat auto y,
-  const std::source_location& loc = std::source_location::current()) {
-  std::cout << loc.function_name() << " -> ";
-
-  if(x == y) {
-    std::cout << OK << std::endl;
-  } else {
-    std::cout << FAIL << std::endl;
-  }
-}
 
 void test_mat_add() {
   std::vector<float> _A = {1, 2, 3, 4, 5, 6};
@@ -118,7 +100,7 @@ void random_test() {
   test_compare(static_cast<int>(in_range), 1);
 }
 
-void test_run_all() {
+int main(int argc, char **argv) {
   test_mat_add();
   test_mat_mul();
   test_mat_mul_transpose();
@@ -126,4 +108,6 @@ void test_run_all() {
   test_mat_scale();
   zeros_test();
   random_test();
+
+  return 0;
 }

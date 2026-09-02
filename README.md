@@ -1,29 +1,31 @@
 # MatMax
 
-A small CUDA-accelerated matrix library written from scratch in C++20/CUDA, with a hand-rolled logistic regression built entirely on top of it — no cuBLAS, no Eigen, no ML frameworks. Every matrix operation the training loop needs (multiply, transpose, elementwise add/sub, scalar scale) is a real CUDA kernel.
+A CUDA-accelerated matrix library for C++20, implemented without external linear algebra dependencies such as cuBLAS or Eigen. Core operations (matrix multiplication, transpose, elementwise addition/subtraction, scalar scaling) are each implemented as CUDA kernels. A logistic regression implementation is included as an example application built entirely on top of the library's matrix operations.
 
-## Why this project exists
+## Purpose
 
-This is an exploration that how far you can get building GPU-accelerated linear algebra primitives from the ground up, then using nothing but those primitives to implement a real (if simple) machine learning algorithm — forward pass, loss, gradient, and weight update, all expressed as matrix ops dispatched to the GPU.
+The goal of this project is to provide GPU-accelerated linear algebra primitives implemented from first principles, and to demonstrate that a real machine learning algorithm — forward pass, loss, gradient computation, and weight update — can be expressed entirely in terms of those primitives. The library is intended as a foundation that can be extended with additional operations and used as the basis for further work.
 
 ## Project structure
 
 ```
 matmax/
 ├── CMakeLists.txt
-├── main.cpp                    # entry point for the test suite binary
-├── test.cpp                    # unit tests for the matrix library
 ├── lib/
 │   ├── matx.hpp                 # Matrix struct + Matx op-dispatch class
 │   ├── matx.cpp                 # Matx method implementations (host side)
 │   └── cuda/
 │       ├── matx_ops.cuh         # CUDA kernel declarations
 │       └── matx_ops.cu          # CUDA kernels + host launch wrappers
-└── ml/
-    └── logistic-regression.cpp  # from-scratch logistic regression demo
+├── tests/
+│   ├── main.cpp                  # unit tests for the matrix library
+│   └── utils.hpp                 # test_compare helper
+└── examples/
+    └── ml/
+        └── logistic-regression.cpp  # logistic regression example
 ```
 
-Two executables come out of the build: `matmax` (the library + its test suite) and `logreg` (the logistic regression demo).
+Two executables come out of the build: `tests` (the library's unit tests) and `logreg` (the logistic regression example).
 
 ## Requirements
 
@@ -39,7 +41,7 @@ mkdir -p build && cd build
 cmake ..
 cmake --build .
 
-./matmax   # runs the matrix library test suite
+./tests    # runs the matrix library test suite
 ./logreg   # trains & validates logistic regression
 ```
 
@@ -49,17 +51,17 @@ cmake --build .
 
 ### `Matrix` (`lib/matx.hpp`)
 
-A minimal row-major matrix: a flat `std::vector<float>` plus `dims`, the length of one row.
+A row-major matrix: a flat `std::vector<float>` plus `dims`, the length of one row.
 
 | Member | Description |
 |---|---|
 | `num_rows()` | `mtx.size() / dims` |
 | `get_cell_at(row, col)` | Bounds-checked element access |
-| `transpose()` | Returns a new transposed matrix (host-side; it's pure index remapping, not worth a kernel) |
+| `transpose()` | Returns a new transposed matrix (host-side index remapping) |
 
 ### `Matx` — the CUDA-backed operations
 
-Every op below allocates device memory, copies operands to the GPU, launches a kernel, copies the result back, and frees device memory. Kernels use a flat 1D grid-stride-free launch (`threadIdx.x + blockIdx.x * blockDim.x`), 256 threads per block, with a bounds check so sizes that aren't clean multiples of the block size don't read/write out of range.
+Every operation below allocates device memory, copies operands to the GPU, launches a kernel, copies the result back, and frees device memory. Kernels use a flat 1D launch (`threadIdx.x + blockIdx.x * blockDim.x`), 256 threads per block, with a bounds check so sizes that aren't clean multiples of the block size don't read/write out of range.
 
 | Method | Shape rule | What it does |
 |---|---|---|
@@ -68,37 +70,21 @@ Every op below allocates device memory, copies operands to the GPU, launches a k
 | `matx.add(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A + B` |
 | `matx.sub(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A - B` |
 | `matx.scale(A, s)` | — | Elementwise `A * s` |
-| `matx.mul(A, B)` | `A.dims == B.num_rows()` | Real matrix multiplication, `M x K` times `K x P` → `M x P` |
+| `matx.mul(A, B)` | `A.dims == B.num_rows()` | Matrix multiplication, `M x K` times `K x P` → `M x P` |
 | `A.transpose()` | — | `M x N` → `N x M` |
 
-Shape mismatches throw `std::invalid_argument` rather than silently producing garbage.
+Shape mismatches throw `std::invalid_argument` rather than silently producing incorrect results.
 
-### Test suite (`test.cpp`)
+### Test suite (`tests/`)
 
-Each op gets a small, hand-computed check. `test_compare<T>` is a C++20 concept-constrained helper restricted to `int`/`float`, and uses `std::source_location` as a default argument so it automatically prints which test function called it — no logging boilerplate needed at each call site:
+Each operation is verified against a hand-computed expected value. `test_compare<T>` (`tests/utils.hpp`) is a C++20 concept-constrained helper restricted to `int`/`float`, and uses `std::source_location` as a default argument so it automatically reports which test function called it:
 
 ```cpp
 void test_compare(IntOrFloat auto x, IntOrFloat auto y,
                    const std::source_location& loc = std::source_location::current());
 ```
 
-Sample run:
-
-```
-void test_mat_add() -> OK
-void test_mat_mul() -> OK
-void test_mat_mul() -> OK
-void test_mat_mul_transpose() -> OK
-void test_mat_mul_transpose() -> OK
-void test_mat_sub() -> OK
-void test_mat_scale() -> OK
-void zeros_test() -> OK
-void random_test() -> OK
-void random_test() -> OK
-void random_test() -> OK
-```
-
-## Logistic regression from scratch (`ml/logistic-regression.cpp`)
+## Logistic regression example (`examples/ml/logistic-regression.cpp`)
 
 A binary classifier trained with full-batch gradient descent, where every matrix operation goes through `Matx`.
 
@@ -113,7 +99,7 @@ Matrix Xt = ds.X.transpose();               // (D+1) x N, computed once
 
 for (int epoch = 0; epoch < epochs; ++epoch) {
   Matrix z = matx.mul(ds.X, w);             // forward: N x 1
-  Matrix p = apply_sigmoid(z);              // activation (elementwise, hand-rolled)
+  Matrix p = apply_sigmoid(z);              // activation (elementwise)
 
   Matrix error = matx.sub(p, ds.y);         // dL/dz, N x 1
   Matrix grad  = matx.mul(Xt, error);       // Xᵀ · error, (D+1) x 1
@@ -123,25 +109,8 @@ for (int epoch = 0; epoch < epochs; ++epoch) {
 }
 ```
 
-Sigmoid and binary cross-entropy are the only pieces done as plain loops — they're elementwise nonlinear/log-based math, not something a `Matx` primitive covers.
+Sigmoid and binary cross-entropy are implemented as plain loops — they are elementwise nonlinear/log-based operations not covered by a `Matx` primitive.
 
-**Validation.** After training, the forward pass is re-run on the same dataset to sanity-check convergence (this is a from-scratch demo, not a benchmark — there's no held-out test split).
+**Validation.** After training, the forward pass is re-run on the same dataset to verify convergence. This example does not use a held-out test split.
 
-### Sample output
-
-```
-epoch 0 -> loss: 0.646289
-epoch 1000 -> loss: 0.00214259
-epoch 2000 -> loss: 0.00107136
-epoch 3000 -> loss: 0.000714659
-epoch 4000 -> loss: 0.000536315
-epoch 4999 -> loss: 0.000429373
-training took 5850 ms for 5000 epochs
-final loss: 0.000429287
-final accuracy: 100%
-learned weights: 0.0352103 0.0365744 0.0343283 0.0318164 0.0364427 ...
-```
-
-(3000 samples, 120 features, learning rate `0.001`, 5000 epochs — GTX 1050 Ti.)
-
-That ~5.8s for 5000 epochs is mostly `cudaMalloc`/`cudaMemcpy` overhead — each epoch launches 3 separate kernels, each with its own host↔device round trip. This library optimizes for clarity over performance (device memory isn't persisted across calls), which is a reasonable next thing to fix if speed becomes the point.
+Each epoch launches three separate kernels through `Matx`, each with its own host↔device round trip. Device memory is not persisted across calls; this favors clarity in the current implementation and is a candidate for optimization in future work.
