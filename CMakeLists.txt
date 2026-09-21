@@ -27,14 +27,5 @@ target_include_directories(matmax
 
 target_link_libraries(matmax PUBLIC CUDA::cudart)
 
-add_executable(tests
-  tests/main.cpp
-)
-
-target_link_libraries(tests PRIVATE matmax)
-
-add_executable(logreg
-  examples/ml/logistic-regression.cpp
-)
-
-target_link_libraries(logreg PRIVATE matmax)
+add_subdirectory(tests)
+add_subdirectory(examples)

@@ -1,31 +1,6 @@
 # MatMax
 
-A CUDA-accelerated matrix library for C++20, implemented without external linear algebra dependencies such as cuBLAS or Eigen. Core operations (matrix multiplication, transpose, elementwise addition/subtraction, scalar scaling) are each implemented as CUDA kernels. A logistic regression implementation is included as an example application built entirely on top of the library's matrix operations.
-
-## Purpose
-
-The goal of this project is to provide GPU-accelerated linear algebra primitives implemented from first principles, and to demonstrate that a real machine learning algorithm — forward pass, loss, gradient computation, and weight update — can be expressed entirely in terms of those primitives. The library is intended as a foundation that can be extended with additional operations and used as the basis for further work.
-
-## Project structure
-
-```
-matmax/
-├── CMakeLists.txt
-├── lib/
-│   ├── matx.hpp                 # Matrix struct + Matx op-dispatch class
-│   ├── matx.cpp                 # Matx method implementations (host side)
-│   └── cuda/
-│       ├── matx_ops.cuh         # CUDA kernel declarations
-│       └── matx_ops.cu          # CUDA kernels + host launch wrappers
-├── tests/
-│   ├── main.cpp                  # unit tests for the matrix library
-│   └── utils.hpp                 # test_compare helper
-└── examples/
-    └── ml/
-        └── logistic-regression.cpp  # logistic regression example
-```
-
-The build produces the `matmax` static library (`lib/`) plus two executables linked against it: `tests` (the library's unit tests) and `logreg` (the logistic regression example).
+MatMax is a CUDA-accelerated matrix library for C++20, implemented without external linear algebra dependencies such as cuBLAS or Eigen. Core operations (matrix multiplication, transpose, elementwise addition/subtraction, scalar scaling) are each implemented as CUDA kernels.
 
 ## Requirements
 
@@ -42,7 +17,6 @@ cmake ..
 cmake --build .
 
 ./tests    # runs the matrix library test suite
-./logreg   # trains & validates logistic regression
 ```
 
 `CMAKE_CUDA_ARCHITECTURES` defaults to `native`, so it targets whatever GPU is in the machine doing the build.
@@ -98,4 +72,4 @@ Every operation below allocates device memory, copies operands to the GPU, launc
 
 Shape mismatches throw `std::invalid_argument` rather than silently producing incorrect results.
 
-See `tests/` and `examples/` for the test suite and example applications, respectively.
+See `tests/` for the test suite.
