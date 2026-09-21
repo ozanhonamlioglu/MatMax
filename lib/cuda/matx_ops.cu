@@ -2,7 +2,6 @@
 #include <curand_kernel.h>
 #include <iostream>
 #include <ctime>
-#include <chrono>
 
 __global__ void cuda_matx_add(float* A, float* B, float* Buffer, int N) {
   // Calculate global thread index
@@ -148,9 +147,7 @@ __global__ void cuda_matx_randomf(float* matrix, int length, unsigned long long 
   }
 }
 
-void matx_randomf(int length, float* Buffer) {
-  unsigned long long seed = static_cast<unsigned long long>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-  
+void matx_randomf(int length, float* Buffer, unsigned long long seed) {
   float* A;
   size_t size = length * sizeof(float);
 
@@ -162,4 +159,44 @@ void matx_randomf(int length, float* Buffer) {
   CUDA_CHECK(cudaMemcpy(Buffer, A, size, cudaMemcpyDeviceToHost));
 
   CUDA_CHECK(cudaFree(A));
+}
+
+__global__ void cuda_matx_equal(float* A, float* B, bool* d_is_equal, int length) {
+  int index = threadIdx.x + blockDim.x * blockIdx.x;
+
+  if(index < length) {
+    if(A[index] != B[index]) {
+      *d_is_equal = false;
+    }
+  }
+}
+
+bool matx_equal(float* A, float* B, int length) {
+  size_t size = length * sizeof(float);
+  float *d_A, *d_B;
+
+  CUDA_CHECK(cudaMalloc(&d_A, size));
+  CUDA_CHECK(cudaMalloc(&d_B, size));
+
+  CUDA_CHECK(cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMemcpy(d_B, B, size, cudaMemcpyHostToDevice));
+
+  bool* d_is_equal;
+  CUDA_CHECK(cudaMallocManaged(&d_is_equal, sizeof(bool)));
+
+  *d_is_equal = true;
+
+  int blocks = blocksPerGrid(length);
+  cuda_matx_equal<<<blocks, threadsPerBlock>>>(d_A, d_B, d_is_equal, length);
+  CUDA_CHECK(cudaGetLastError());
+
+  CUDA_CHECK(cudaDeviceSynchronize());
+
+  bool is_equal = *d_is_equal;
+
+  CUDA_CHECK(cudaFree(d_A));
+  CUDA_CHECK(cudaFree(d_B));
+  CUDA_CHECK(cudaFree(d_is_equal));
+
+  return is_equal;
 }

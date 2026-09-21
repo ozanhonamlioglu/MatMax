@@ -55,6 +55,8 @@ namespace matx {
     static Matrix sub(const Matrix& A, const Matrix& B);
     static Matrix scale(const Matrix& A, float scalar);
     static Matrix mul(const Matrix& A, const Matrix& B);
+
+    static bool is_equal(const Matrix& A, const Matrix& B);
   
   private:
     static void matrix_elementwise_check(const Matrix& A, const Matrix& B);

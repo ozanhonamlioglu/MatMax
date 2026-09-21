@@ -1,6 +1,6 @@
 # MatMax
 
-MatMax is a CUDA-accelerated matrix library for C++20, implemented without external linear algebra dependencies such as cuBLAS or Eigen. Core operations (matrix multiplication, transpose, elementwise addition/subtraction, scalar scaling) are each implemented as CUDA kernels.
+MatMax is a dependency-free, CUDA-accelerated matrix library for C++. Core operations (matrix multiplication, transpose, elementwise addition/subtraction, scalar scaling) are each implemented as CUDA kernels.
 
 ## Requirements
 
@@ -44,9 +44,11 @@ Linking against `matmax` is sufficient — its include directory and its depende
 #include "lib/matx.hpp"
 ```
 
+Everything lives under the `matx` namespace.
+
 ## The matrix library
 
-### `Matrix` (`lib/matx.hpp`)
+### `matx::Matrix` (`lib/matx.hpp`)
 
 A row-major matrix: a flat `std::vector<float>` plus `dims`, the length of one row.
 
@@ -56,20 +58,25 @@ A row-major matrix: a flat `std::vector<float>` plus `dims`, the length of one r
 | `get_cell_at(row, col)` | Bounds-checked element access |
 | `transpose()` | Returns a new transposed matrix (host-side index remapping) |
 
-### `Matx` — the CUDA-backed operations
+### `matx::Ops` — the CUDA-backed operations
 
 Every operation below allocates device memory, copies operands to the GPU, launches a kernel, copies the result back, and frees device memory. Kernels use a flat 1D launch (`threadIdx.x + blockIdx.x * blockDim.x`), 256 threads per block, with a bounds check so sizes that aren't clean multiples of the block size don't read/write out of range.
 
 | Method | Shape rule | What it does |
 |---|---|---|
-| `Matx::zeros(h, d)` | — | `h x d` matrix, all zeros (`vector::resize` value-initializes `float` to `0.0f`) |
-| `Matx::random(h, d)` | — | `h x d` matrix, uniform random in `[0, 1)` (`std::mt19937` + `std::uniform_real_distribution`) |
-| `Matx::add(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A + B` |
-| `Matx::sub(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A - B` |
-| `Matx::scale(A, s)` | — | Elementwise `A * s` |
-| `Matx::mul(A, B)` | `A.dims == B.num_rows()` | Matrix multiplication, `M x K` times `K x P` → `M x P` |
+| `Ops::zeros(h, d)` | — | `h x d` matrix, all zeros (`vector::resize` value-initializes `float` to `0.0f`) |
+| `Ops::randomf(h, d)` | — | `h x d` matrix, uniform random in `[0, 1)` (`curand`, seeded from the clock by default) |
+| `Ops::add(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A + B` |
+| `Ops::sub(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A - B` |
+| `Ops::scale(A, s)` | — | Elementwise `A * s` |
+| `Ops::mul(A, B)` | `A.dims == B.num_rows()` | Matrix multiplication, `M x K` times `K x P` → `M x P` |
+| `Ops::is_equal(A, B)` | `A.dims == B.dims`, same total size | `true` iff every element matches |
 | `A.transpose()` | — | `M x N` → `N x M` |
 
 Shape mismatches throw `std::invalid_argument` rather than silently producing incorrect results.
 
 See `tests/` for the test suite.
+
+## Upcoming
+
+A chained-operations mode (`chainops`) is in the works, aimed at cutting out the host↔device `memcpy` overhead that today's one-shot-per-call operations incur. More details to follow.

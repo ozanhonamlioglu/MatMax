@@ -79,7 +79,7 @@ void zeros_test() {
   test_compare(static_cast<int>(A.mtx.size()), 50);
 }
 
-void random_test() {
+void test_random() {
   matx::Matrix A = matx::Ops::randomf(5, 10);
   test_compare(static_cast<int>(A.mtx.size()), 50);
   test_compare(A.dims, 10);
@@ -95,6 +95,15 @@ void random_test() {
   test_compare(static_cast<int>(in_range), 1);
 }
 
+void test_is_equal() {
+  matx::Matrix A = matx::Ops::randomf(200, 200);
+  matx::Matrix B = A;
+  matx::Matrix C = matx::Ops::randomf(200, 200);
+
+  test_compare(static_cast<int>(matx::Ops::is_equal(A, B)), 1);
+  test_compare(static_cast<int>(matx::Ops::is_equal(A, C)), 0);
+}
+
 void chain_of_ops() {
  // TODO
 }
@@ -106,7 +115,8 @@ int main(int argc, char **argv) {
   test_mat_sub();
   test_mat_scale();
   zeros_test();
-  random_test();
+  test_random();
+  test_is_equal();
 
   return 0;
 }

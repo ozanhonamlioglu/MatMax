@@ -5,7 +5,6 @@
 #include <stdexcept>
 #include <random>
 
-// PUBLIC
 matx::Matrix matx::Ops::add(const matx::Matrix& A, const matx::Matrix& B) {
   matrix_elementwise_check(A, B);
 
@@ -95,6 +94,18 @@ matx::Matrix matx::Ops::randomf(int h, int d) {
   mat.mtx.resize(h * d);
   matx_randomf(h * d, mat.mtx.data());
   return mat;
+}
+
+bool matx::Ops::is_equal(const matx::Matrix& A, const matx::Matrix& B) {
+  matrix_elementwise_check(A, B);
+
+  int N = static_cast<int>(A.mtx.size());
+
+  return matx_equal(
+    const_cast<float*>(A.mtx.data()),
+    const_cast<float*>(B.mtx.data()),
+    N
+  );
 }
 
 // PRIVATE
