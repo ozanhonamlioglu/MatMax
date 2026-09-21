@@ -8,8 +8,8 @@
 #include <ranges>
 
 struct Dataset {
-  Matrix X; // N x (D+1), last column is the bias term (always 1)
-  Matrix y; // N x 1
+  matx::Matrix X; // N x (D+1), last column is the bias term (always 1)
+  matx::Matrix y; // N x 1
 };
 
 // Two Gaussian blobs around (-2,...,-2) and (2,...,2) -> linearly separable classes
@@ -43,8 +43,8 @@ float sigmoid(float z) {
   return 1.0f / (1.0f + std::exp(-z));
 }
 
-Matrix apply_sigmoid(const Matrix& z) {
-  Matrix out;
+matx::Matrix apply_sigmoid(const matx::Matrix& z) {
+  matx::Matrix out;
   out.dims = z.dims;
   out.mtx.resize(z.mtx.size());
 
@@ -55,7 +55,7 @@ Matrix apply_sigmoid(const Matrix& z) {
   return out;
 }
 
-float binary_cross_entropy(const Matrix& y_true, const Matrix& y_pred) {
+float binary_cross_entropy(const matx::Matrix& y_true, const matx::Matrix& y_pred) {
   int n = static_cast<int>(y_true.mtx.size());
   float loss = 0.0f;
 
@@ -68,7 +68,7 @@ float binary_cross_entropy(const Matrix& y_true, const Matrix& y_pred) {
   return loss / n;
 }
 
-float accuracy(const Matrix& y_true, const Matrix& y_pred) {
+float accuracy(const matx::Matrix& y_true, const matx::Matrix& y_pred) {
   int n = static_cast<int>(y_true.mtx.size());
   int correct = 0;
 
@@ -91,26 +91,26 @@ int main() {
   Dataset ds = generate_dataset(n_samples, n_features);
 
   // Small random init around 0
-  Matrix w = Matx::random(ds.X.dims, 1);
+  matx::Matrix w = matx::Ops::randomf(ds.X.dims, 1);
   for(float& v : w.mtx) {
     v = (v - 0.5f) * 0.01f;
   }
 
-  Matrix Xt = ds.X.transpose(); // (D+1) x N, X never changes so transpose once
+  matx::Matrix Xt = ds.X.transpose(); // (D+1) x N, X never changes so transpose once
 
   auto start = std::chrono::steady_clock::now();
 
   for(int epoch = 0; epoch < epochs; ++epoch) {
-    Matrix z = Matx::mul(ds.X, w);  // N x 1
-    Matrix p = apply_sigmoid(z);   // N x 1
+    matx::Matrix z = matx::Ops::mul(ds.X, w);  // N x 1
+    matx::Matrix p = apply_sigmoid(z);   // N x 1
 
-    Matrix error = Matx::sub(p, ds.y); // N x 1
+    matx::Matrix error = matx::Ops::sub(p, ds.y); // N x 1
 
-    Matrix grad = Matx::mul(Xt, error); // (D+1) x 1
+    matx::Matrix grad = matx::Ops::mul(Xt, error); // (D+1) x 1
 
-    Matrix delta = Matx::scale(grad, -lr / n_samples);
+    matx::Matrix delta = matx::Ops::scale(grad, -lr / n_samples);
 
-    w = Matx::add(w, delta);
+    w = matx::Ops::add(w, delta);
 
     if(epoch % 1000 == 0 || epoch == epochs - 1) {
       float loss = binary_cross_entropy(ds.y, p);
@@ -123,8 +123,8 @@ int main() {
   std::cout << "training took " << elapsed_ms << " ms for " << epochs << " epochs" << std::endl;
 
   // Validate: forward pass again on the same dataset the model trained on
-  Matrix z_final = Matx::mul(ds.X, w);
-  Matrix p_final = apply_sigmoid(z_final);
+  matx::Matrix z_final = matx::Ops::mul(ds.X, w);
+  matx::Matrix p_final = apply_sigmoid(z_final);
 
   float final_loss = binary_cross_entropy(ds.y, p_final);
   float final_acc = accuracy(ds.y, p_final);

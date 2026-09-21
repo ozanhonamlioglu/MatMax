@@ -6,10 +6,10 @@
 #include <random>
 
 // PUBLIC
-Matrix Matx::add(const Matrix& A, const Matrix& B) {
+matx::Matrix matx::Ops::add(const matx::Matrix& A, const matx::Matrix& B) {
   matrix_elementwise_check(A, B);
 
-  Matrix result;
+  matx::Matrix result;
   result.dims = A.dims;
   result.mtx.resize(A.mtx.size());
 
@@ -25,10 +25,10 @@ Matrix Matx::add(const Matrix& A, const Matrix& B) {
   return result;
 }
 
-Matrix Matx::sub(const Matrix& A, const Matrix& B) {
+matx::Matrix matx::Ops::sub(const matx::Matrix& A, const matx::Matrix& B) {
   matrix_elementwise_check(A, B);
 
-  Matrix result;
+  matx::Matrix result;
   result.dims = A.dims;
   result.mtx.resize(A.mtx.size());
 
@@ -44,8 +44,8 @@ Matrix Matx::sub(const Matrix& A, const Matrix& B) {
   return result;
 }
 
-Matrix Matx::scale(const Matrix& A, float scalar) {
-  Matrix result;
+matx::Matrix matx::Ops::scale(const matx::Matrix& A, float scalar) {
+  matx::Matrix result;
   result.dims = A.dims;
   result.mtx.resize(A.mtx.size());
 
@@ -61,14 +61,14 @@ Matrix Matx::scale(const Matrix& A, float scalar) {
   return result;
 }
 
-Matrix Matx::mul(const Matrix& A, const Matrix& B) {
+matx::Matrix matx::Ops::mul(const matx::Matrix& A, const matx::Matrix& B) {
   matrix_multiplication_check(A, B);
 
   int M = A.num_rows();
   int K = A.dims;
   int P = B.dims;
 
-  Matrix result;
+  matx::Matrix result;
   result.dims = P;
   result.mtx.resize(M * P);
 
@@ -82,30 +82,23 @@ Matrix Matx::mul(const Matrix& A, const Matrix& B) {
   return result;
 }
 
-Matrix Matx::zeros(int h, int d) {
-  Matrix mat;
+matx::Matrix matx::Ops::zeros(int h, int d) {
+  matx::Matrix mat;
   mat.dims = d;
   mat.mtx.resize(h * d);
   return mat;
 }
 
-Matrix Matx::random(int h, int d) {
-  Matrix mat;
+matx::Matrix matx::Ops::randomf(int h, int d) {
+  matx::Matrix mat;
   mat.dims = d;
   mat.mtx.resize(h * d);
-
-  static std::mt19937 gen{std::random_device{}()};
-  std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-
-  for(float& cell : mat.mtx) {
-    cell = dist(gen);
-  }
-
+  matx_randomf(h * d, mat.mtx.data());
   return mat;
 }
 
 // PRIVATE
-void Matx::matrix_elementwise_check(const Matrix& A, const Matrix& B) {
+void matx::Ops::matrix_elementwise_check(const matx::Matrix& A, const matx::Matrix& B) {
   if(A.mtx.size() != B.mtx.size()) {
     throw std::invalid_argument("Matrices must have the same total elements.");
   }
@@ -115,7 +108,7 @@ void Matx::matrix_elementwise_check(const Matrix& A, const Matrix& B) {
   }
 }
 
-void Matx::matrix_multiplication_check(const Matrix& A, const Matrix& B) {
+void matx::Ops::matrix_multiplication_check(const matx::Matrix& A, const matx::Matrix& B) {
   if (A.dims != B.num_rows()) {
     throw std::invalid_argument("Matrix multiplication failed: A's column count must match B's row count!");
   }
