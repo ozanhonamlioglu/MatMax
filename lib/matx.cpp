@@ -108,6 +108,21 @@ bool matx::Ops::is_equal(const matx::Matrix& A, const matx::Matrix& B) {
   );
 }
 
+matx::Matrix matx::Ops::transpose(const matx::Matrix& A) {
+  matx::Matrix result;
+  result.dims = A.num_rows();
+  result.mtx.resize(A.mtx.size());
+
+  matx_transpose(
+    const_cast<float *>(A.mtx.data()), 
+    A.num_rows(),
+    A.dims,
+    result.mtx.data()
+  );
+
+  return result;
+}
+
 // PRIVATE
 void matx::Ops::matrix_elementwise_check(const matx::Matrix& A, const matx::Matrix& B) {
   if(A.mtx.size() != B.mtx.size()) {

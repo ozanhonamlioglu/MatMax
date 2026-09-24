@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cuda_runtime.h>
 
-int threadsPerBlock = 256;
+const int threadsPerBlock = 256;
 
 inline int blocksPerGrid(int N) {
   return (N + threadsPerBlock - 1) / threadsPerBlock;

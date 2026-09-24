@@ -29,6 +29,7 @@ namespace matx {
       return mtx[row_i * dims + col_i];
     }
   
+    // transpose on host
     Matrix transpose() const {
       int rows = num_rows();
   
@@ -50,6 +51,7 @@ namespace matx {
   public:
     static Matrix zeros(int h, int d);
     static Matrix randomf(int h, int d);
+    static Matrix transpose(const matx::Matrix& A); // transpose on device
   
     static Matrix add(const Matrix& A, const Matrix& B);
     static Matrix sub(const Matrix& A, const Matrix& B);

@@ -34,7 +34,7 @@ void test_mat_mul() {
   test_compare(cell_value_2, 40.0f);
 }
 
-void test_mat_mul_transpose() {
+void test_mat_transpose_host() {
   std::vector<float> _A = {1, 2, 3, 4, 5, 6};
 
   matx::Matrix A { .mtx = _A, .dims = 3 };
@@ -48,6 +48,18 @@ void test_mat_mul_transpose() {
   // After transpose: trans is 3x2, trans(col, row) == A(row, col)
   float after_value = trans.get_cell_at(0, 1);
   test_compare(after_value, 4.0f);
+}
+
+void test_mat_transpose_device() {
+  // Non-square so a swapped Row/Col would be caught
+  matx::Matrix A = matx::Ops::randomf(300, 170);
+
+  matx::Matrix host_trans = A.transpose();
+  matx::Matrix device_trans = matx::Ops::transpose(A);
+
+  test_compare(device_trans.dims, host_trans.dims);
+  test_compare(device_trans.num_rows(), host_trans.num_rows());
+  test_compare(static_cast<int>(matx::Ops::is_equal(host_trans, device_trans)), 1);
 }
 
 void test_mat_sub() {
@@ -111,7 +123,8 @@ void chain_of_ops() {
 int main(int argc, char **argv) {
   test_mat_add();
   test_mat_mul();
-  test_mat_mul_transpose();
+  test_mat_transpose_host();
+  test_mat_transpose_device();
   test_mat_sub();
   test_mat_scale();
   zeros_test();

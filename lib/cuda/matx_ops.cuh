@@ -17,3 +17,5 @@ void matx_randomf(
   float* out, 
   unsigned long long seed = std::chrono::high_resolution_clock::now().time_since_epoch().count()
 );
+
+void matx_transpose(float* A, int Row, int Col, float* Buffer);

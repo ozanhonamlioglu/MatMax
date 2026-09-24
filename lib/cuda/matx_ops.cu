@@ -200,3 +200,35 @@ bool matx_equal(float* A, float* B, int length) {
 
   return is_equal;
 }
+
+__global__ void cuda_matx_transpose(float* A, int Row, int Col, float* Buffer) {
+  int index = threadIdx.x + blockIdx.x * blockDim.x;
+
+  // A is Row x Col, Buffer (output) is Col x Row
+  if (index < Row * Col) {
+    int row = index / Col;
+    int col = index % Col;
+
+    Buffer[col * Row + row] = A[index];
+  }
+}
+
+void matx_transpose(float* A, int Row, int Col, float* Buffer) {
+  int length = Row * Col;
+  size_t size = length * sizeof(float);
+  
+  float *d_A, *Out;
+
+  CUDA_CHECK(cudaMalloc(&d_A, size));
+  CUDA_CHECK(cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice));
+  CUDA_CHECK(cudaMalloc(&Out, size));
+
+  int blocks = blocksPerGrid(length);
+  cuda_matx_transpose<<<blocks, threadsPerBlock>>>(d_A, Row, Col, Out);
+  CUDA_CHECK(cudaGetLastError());
+
+  CUDA_CHECK(cudaMemcpy(Buffer, Out, size, cudaMemcpyDeviceToHost));
+
+  cudaFree(Out);
+  cudaFree(d_A);
+}
