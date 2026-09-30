@@ -42,6 +42,7 @@ Linking against `matmax` is sufficient — its include directory and its depende
 
 ```cpp
 #include "lib/matx.hpp"
+#include "lib/chain.hpp" // only for chained operations
 ```
 
 Everything lives under the `matx` namespace.
@@ -71,12 +72,38 @@ Every operation below allocates device memory, copies operands to the GPU, launc
 | `Ops::scale(A, s)` | — | Elementwise `A * s` |
 | `Ops::mul(A, B)` | `A.dims == B.num_rows()` | Matrix multiplication, `M x K` times `K x P` → `M x P` |
 | `Ops::is_equal(A, B)` | `A.dims == B.dims`, same total size | `true` iff every element matches |
-| `A.transpose()` | — | `M x N` → `N x M` |
+| `Ops::transpose(A)` | — | `M x N` → `N x M`, on the device |
+| `A.transpose()` | — | `M x N` → `N x M`, on the host |
 
 Shape mismatches throw `std::invalid_argument` rather than silently producing incorrect results.
 
 See `tests/` for the test suite.
 
-## Upcoming
+## Chained operations
 
-A chained-operations mode (`chainops`) is in the works, aimed at cutting out the host↔device `memcpy` overhead that today's one-shot-per-call operations incur. More details to follow.
+### `matx::ChainOps` (`lib/chain.hpp`)
+
+The one-shot `Ops` pay a host↔device round trip on every call. `ChainOps` keeps results on the device instead, so a sequence of operations only copies back to the host once, at the end.
+
+Operands are `matx::ChainMatrix`: either a host pointer (`mtx`) or a device pointer (`device`), plus `dims` and `rows`. Host operands are uploaded by the op that consumes them; results of earlier ops are already on the device and are reused as is.
+
+```cpp
+matx::ChainMatrix cA { .mtx = A.mtx.data(), .device = nullptr, .dims = A.dims, .rows = A.num_rows() };
+matx::ChainMatrix cB { .mtx = B.mtx.data(), .device = nullptr, .dims = B.dims, .rows = B.num_rows() };
+
+matx::ChainOps chain;
+matx::ChainMatrix sum = chain.add(cA, cB);
+chain.scale(sum, 2.5f);
+matx::Matrix result = chain.complete(); // (A + B) * 2.5
+```
+
+| Method | Shape rule | What it does |
+|---|---|---|
+| `add(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A + B` |
+| `sub(A, B)` | `A.dims == B.dims`, same total size | Elementwise `A - B` |
+| `scale(A, s)` | — | Elementwise `A * s` |
+| `mul(A, B)` | `A.dims == B.rows` | Matrix multiplication, `M x K` times `K x P` → `M x P` |
+| `transpose(A)` | — | `M x N` → `N x M` |
+| `complete()` | — | Copies the **last** op's result to the host as a `matx::Matrix` and frees all device memory of the chain |
+
+Every result stays on the device until `complete()` is called, and every `ChainMatrix` returned by the chain is invalid after it. If `complete()` is never called, the destructor frees the device memory. `ChainOps` is not copyable.

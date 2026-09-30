@@ -1,7 +1,9 @@
 #include "utils.hpp"
 #include "lib/matx.hpp"
+#include "lib/chain.hpp"
 
 #include <vector>
+#include <stdexcept>
 #include <type_traits>
 #include <concepts>
 #include <source_location>
@@ -117,7 +119,97 @@ void test_is_equal() {
 }
 
 void chain_of_ops() {
- // TODO
+  matx::Matrix A = matx::Ops::randomf(300, 170);
+  matx::Matrix B = matx::Ops::randomf(300, 170);
+  matx::Matrix C = matx::Ops::randomf(300, 170);
+
+  // Regular ops: ((A + B) - C) * 2.5, each step round-trips through the host
+  matx::Matrix expected = matx::Ops::scale(matx::Ops::sub(matx::Ops::add(A, B), C), 2.5f);
+
+  // Chained ops: same computation, intermediates stay on the device
+  matx::ChainMatrix cA { .mtx = A.mtx.data(), .device = nullptr, .dims = A.dims, .rows = A.num_rows() };
+  matx::ChainMatrix cB { .mtx = B.mtx.data(), .device = nullptr, .dims = B.dims, .rows = B.num_rows() };
+  matx::ChainMatrix cC { .mtx = C.mtx.data(), .device = nullptr, .dims = C.dims, .rows = C.num_rows() };
+
+  matx::ChainOps chain;
+  matx::ChainMatrix sum = chain.add(cA, cB);
+  matx::ChainMatrix diff = chain.sub(sum, cC);
+  chain.scale(diff, 2.5f);
+  matx::Matrix result = chain.complete();
+
+  test_compare(result.dims, expected.dims);
+  test_compare(result.num_rows(), expected.num_rows());
+  test_compare(static_cast<int>(matx::Ops::is_equal(result, expected)), 1);
+}
+
+void chain_without_complete() {
+  matx::Matrix A = matx::Ops::randomf(50, 40);
+  matx::ChainMatrix cA { .mtx = A.mtx.data(), .device = nullptr, .dims = A.dims, .rows = A.num_rows() };
+
+  // complete() is never called, ~ChainOps must free the device buffers
+  {
+    matx::ChainOps chain;
+    matx::ChainMatrix sum = chain.add(cA, cA);
+    chain.scale(sum, 2.0f);
+  }
+
+  test_compare(1, 1);
+}
+
+void chain_shape_mismatch() {
+  matx::Matrix A = matx::Ops::randomf(4, 6);
+  matx::Matrix B = matx::Ops::randomf(6, 4); // same element count, different shape
+  matx::ChainMatrix cA { .mtx = A.mtx.data(), .device = nullptr, .dims = A.dims, .rows = A.num_rows() };
+  matx::ChainMatrix cB { .mtx = B.mtx.data(), .device = nullptr, .dims = B.dims, .rows = B.num_rows() };
+
+  matx::ChainOps chain;
+  bool thrown = false;
+  try {
+    chain.add(cA, cB);
+  } catch(const std::invalid_argument&) {
+    thrown = true;
+  }
+
+  test_compare(static_cast<int>(thrown), 1);
+}
+
+void chain_mul_transpose() {
+  // Non-square everywhere so a swapped dims/rows would be caught
+  matx::Matrix A = matx::Ops::randomf(300, 170);
+  matx::Matrix B = matx::Ops::randomf(300, 120);
+
+  // Regular ops: transpose(A) * B -> 170 x 120, then transpose -> 120 x 170
+  matx::Matrix expected = matx::Ops::transpose(matx::Ops::mul(matx::Ops::transpose(A), B));
+
+  matx::ChainMatrix cA { .mtx = A.mtx.data(), .device = nullptr, .dims = A.dims, .rows = A.num_rows() };
+  matx::ChainMatrix cB { .mtx = B.mtx.data(), .device = nullptr, .dims = B.dims, .rows = B.num_rows() };
+
+  matx::ChainOps chain;
+  matx::ChainMatrix tA = chain.transpose(cA);
+  matx::ChainMatrix prod = chain.mul(tA, cB);
+  chain.transpose(prod);
+  matx::Matrix result = chain.complete();
+
+  test_compare(result.dims, expected.dims);
+  test_compare(result.num_rows(), expected.num_rows());
+  test_compare(static_cast<int>(matx::Ops::is_equal(result, expected)), 1);
+}
+
+void chain_mul_shape_mismatch() {
+  matx::Matrix A = matx::Ops::randomf(4, 6);
+  matx::Matrix B = matx::Ops::randomf(4, 6); // A's 6 columns != B's 4 rows
+  matx::ChainMatrix cA { .mtx = A.mtx.data(), .device = nullptr, .dims = A.dims, .rows = A.num_rows() };
+  matx::ChainMatrix cB { .mtx = B.mtx.data(), .device = nullptr, .dims = B.dims, .rows = B.num_rows() };
+
+  matx::ChainOps chain;
+  bool thrown = false;
+  try {
+    chain.mul(cA, cB);
+  } catch(const std::invalid_argument&) {
+    thrown = true;
+  }
+
+  test_compare(static_cast<int>(thrown), 1);
 }
 
 int main(int argc, char **argv) {
@@ -130,6 +222,11 @@ int main(int argc, char **argv) {
   zeros_test();
   test_random();
   test_is_equal();
+  chain_of_ops();
+  chain_without_complete();
+  chain_shape_mismatch();
+  chain_mul_transpose();
+  chain_mul_shape_mismatch();
 
   return 0;
 }

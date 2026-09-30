@@ -1,4 +1,5 @@
 #include "utils.cuh"
+#include "matx_ops.cuh"
 #include <curand_kernel.h>
 #include <iostream>
 #include <ctime>

@@ -17,7 +17,9 @@ find_package(CUDAToolkit REQUIRED)
 
 add_library(matmax STATIC
   lib/matx.cpp
+  lib/chain.cpp
   lib/cuda/matx_ops.cu
+  lib/cuda/matx_chain_ops.cu
 )
 
 target_include_directories(matmax
