@@ -53,10 +53,3 @@ namespace matx
   };
 
 }
-
-/**
- * Each operation executes the command but doesn't move from device to host
- * Until "end" is called.
- * 
- * Each operation run on when executed but will not be freed or moved data to the host until end runs! Continue...
- */

@@ -228,5 +228,11 @@ int main(int argc, char **argv) {
   chain_mul_transpose();
   chain_mul_shape_mismatch();
 
+  if(test_failures > 0) {
+    std::cout << "\n" << test_failures << " check(s) " << FAIL << std::endl;
+    return 1;
+  }
+
+  std::cout << "\nAll checks " << OK << std::endl;
   return 0;
 }

@@ -8,6 +8,8 @@
 template <typename T>
 concept IntOrFloat = std::same_as<T, int> || std::same_as<T, float>;
 
+inline int test_failures = 0;
+
 void test_compare(
   IntOrFloat auto x, 
   IntOrFloat auto y,
@@ -18,5 +20,6 @@ void test_compare(
     std::cout << OK << std::endl;
   } else {
     std::cout << FAIL << std::endl;
+    ++test_failures;
   }
 }

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+# A newer push to the same branch/PR cancels the run still in progress
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    # Runs on the self-hosted GPU machine. Pull requests from forks are skipped
+    # so untrusted code never executes on it.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show GPU and toolchain
+        run: |
+          nvidia-smi
+          nvcc --version
+          cmake --version
+
+      - name: Configure
+        run: cmake -S . -B build-ci -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build-ci -j "$(nproc)"
+
+      - name: Run tests
+        run: ./build-ci/tests/tests

@@ -31,7 +31,7 @@ include(FetchContent)
 FetchContent_Declare(
   matmax
   GIT_REPOSITORY https://github.com/ozanhonamlioglu/MatMax.git
-  GIT_TAG main # pin to a released tag once one exists, e.g. v0.1.0
+  GIT_TAG main # pin to a released tag once one exists, e.g. v0.2.0
 )
 FetchContent_MakeAvailable(matmax)
 
